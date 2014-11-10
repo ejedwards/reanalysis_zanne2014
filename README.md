@@ -1,6 +1,3 @@
-######################################
-####    READ ME d.d. 7-Nov-2014   ####
-######################################
 
 Description of files (representing data, scripts, and results) associated with
 ## paper citation ##, a critique of Zanne AE et al. (2014) Three keys to the radiation of angiosperms into freezing environments. Nature 506: 89–92.
