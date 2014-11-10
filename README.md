@@ -1,12 +1,11 @@
 
-Description of files (representing data, scripts, and results) associated with
-## paper citation ##, a critique of Zanne AE et al. (2014) Three keys to the radiation of angiosperms into freezing environments. Nature 506: 89–92.
+Description of files (representing data, scripts, and results) associated with a critique of Zanne AE et al. (2014) Three keys to the radiation of angiosperms into freezing environments. Nature 506: 89–92.
 
 
 ################################
 
 The folder in which the README is located contains the following files:
- - README.txt  			 :	This very file		
+ - README.md  			 :	This very file		
  - annotated_analyses_script.R  :  The file with all annotated R scripts to repeat our 
  							analyses. It demonstrates the implementation of our analyses,
  							but running them serially takes very long.  Therefore, we 
