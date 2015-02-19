@@ -13,6 +13,8 @@ The folder in which the README is located contains the following files:
  							Centre for Computation and Visualization at Brown University. 
  							To facilitate following all our steps, we provide saves of 
  							intermediate results after each section of the script.
+ - annotated_analyses_script_v1.1.R	:	This file is a slightly updated set of analyses -- 
+ 							the only changes are due to new figures, at the request of reviewers
  - R_source_custom_functions.R  :  This file contains custom R functions which we wrote to 
  							facilitate the analyses.  It is read from the R script.
  - results_ClimateScoringSensitivity.txt  :  This is a tab-delimited file containing the 
@@ -58,7 +60,7 @@ And it contains the following subfolders:
  - ./intermediate_results/  :  Contains intermediate results, that is, results generated
  							and processed in R at 11 intermediate stages of the analyses.
  - ./figures/				:  Contains additional figures generated using the R script.
- 							annotated_analyses_script.R
+ 							annotated_analyses_script_v1.1.R
  
 
 ################################
