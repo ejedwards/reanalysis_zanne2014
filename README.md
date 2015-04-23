@@ -17,6 +17,13 @@ The folder in which the README is located contains the following files:
  							the only changes are due to new figures, at the request of reviewers
  - R_source_custom_functions.R  :  This file contains custom R functions which we wrote to 
  							facilitate the analyses.  It is read from the R script.
+ - cleanGbifCoords.1.0.py : This is a general-use version of a portion of the script that we developed 
+ 							to clean the Zanne et al. climate data. Specifially, this script will 
+ 							remove political centroids and herbaria locations from a collection of 
+ 							latitudes/longitudes. If used, please cite our BCA: 
+ 							Edwards EJ, J de Vos, MJ Donoghue. 2015. Brief Communications Arising: 
+ 							Doubtful pathways to cold tolerance in plants. 
+ 							Nature doi:10.1038/nature14393.
  - results_ClimateScoringSensitivity.txt  :  This is a tab-delimited file containing the 
  							results of analyses that differed in the handling of the 
  							climate data (annotated_analyses_script.R contains the
