@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 	##################################################################################
-	## this script takes an input GBIF dumb formatted as tab delimited text, no header, 
+	## this script takes an input GBIF dump formatted as tab delimited text, no header, 
 	## with at least three columns:
 	#  - species name
 	#  - latitude
 	#  - longitude
-	## it filters out coordinates exactly at a political centroid or major herbarium.
+	## it filters out coordinates exactly at a political centroid or major herbaria.
 	## it implements the cleaning step in "Edwards EJ, De Vos JM, Donoghue MJ, in press.
 	#  Brief Communications Arising: Doubtful pathways to cold tolerance in plants.
 	#  Nature." that underlies the generation of the _groomed dataset from the data set

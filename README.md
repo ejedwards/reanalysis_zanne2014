@@ -19,7 +19,7 @@ The folder in which the README is located contains the following files:
  							facilitate the analyses.  It is read from the R script.
  - cleanGbifCoords.1.0.py : This is a general-use version of a portion of the script that we developed 
  							to clean the Zanne et al. climate data. Specifially, this script will 
- 							remove political centroids and herbaria locations from a collection of 
+ 							remove political centroids and locations of major herbaria from a collection of 
  							latitudes/longitudes. If used, please cite our BCA: 
  							Edwards EJ, J de Vos, MJ Donoghue. 2015. Brief Communications Arising: 
  							Doubtful pathways to cold tolerance in plants. 
