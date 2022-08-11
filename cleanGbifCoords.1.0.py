@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 	##################################################################################
 	## this script takes an input GBIF dump formatted as tab delimited text, no header, 
@@ -59,10 +59,10 @@ TimeStart = time.time()
 Usage = '\nUsage of cleanGbifCoords script.\n\nThis python script parses locality data and returns files with "good" and "bad" locality coordinates.\nIt requires at least four input arguments (in this order):\n- input file name (with path if located in different directory): locality data, tab or comma delimited, \n\tno header, specifying a name, latitidude, longitude, and other stuff if you wish. The latitude\n\tand longitude need to be in decimal degrees and placed in the second and third column in the\n\tinput file, respectively.\n- bad coordinate file name:  bad coordinates (corners of 0.01 degree grid cells), no header, each\n\tcoordinate on a new line, lat and long comma or tab delimited. This script is intended to be\n\tused with the file allHerbaria_ADM1_badCoords which specifies the four corners of the 0.01\n\tdegree gridcells that contain herbaria with > 1,500,000 specimens and the ADM1 level\n\tadministrative divisions (e.g. states / provinces / cantons).\n- output file name for good localities.\n- output file name for bad localities.\n- [optional] setting for method to match localities to "bad" coordinates. Possible values:\n\t- "BadByString" truncates locality data after the second digit\n\t- "BadbyNumber" rounds locality data to two digits\n\t- "BadByBoth" tries matching first by rounding and then tries it by truncating.\n\t- "BadByNone" only excludes records by being imprecise.\n\tDefault behaviour is "badByString" because it is the faster way to exclude "bad" localities.\n\nNB: this script does not (yet) remove duplicate records. They can typically be removed e.g. with\nTextWrangler, Excel, etc. prior to processing.\n\nSuggested citation: Edwards EJ, De Vos JM, Donoghue MJ, in press. Brief Communications Arising: Doubtful\npathways to cold tolerance in plants. Nature.\n'
 
 if len(sys.argv) < 5 or len(sys.argv) > 6 or '-h' in sys.argv:
-	print Usage
+	print(Usage)
 	sys.exit()
 if len(sys.argv) == 6 and sys.argv[5] not in ['BadByString', 'BadByNumber', 'BadByBoth', 'BadByNone']:
-	print Usage
+	print(Usage)
 	sys.exit()
 
 # apply command line settings
@@ -73,250 +73,238 @@ OutBadFileName		= sys.argv[4]
 
 # adjust default settings if specified
 if len(sys.argv) == 6:
-	if sys.argv[5]   == 'BadByNumber':
-		ExclusionViaStringMatching	= False
-		ExclusionViaRounding		= True
-	elif sys.argv[5] == 'BadByString':
-		ExclusionViaStringMatching	= True
-		ExclusionViaRounding		= False
-	elif sys.argv[5] == 'BadByBoth':
-		ExclusionViaStringMatching	= True
-		ExclusionViaRounding		= True
-	elif sys.argv[5] == 'BadByNone':
-		ExclusionViaStringMatching	= False
-		ExclusionViaRounding		= False
+    if sys.argv[5]   == 'BadByNumber':
+        ExclusionViaStringMatching = False
+        ExclusionViaRounding = True
+    elif sys.argv[5] == 'BadByString':
+        ExclusionViaStringMatching = True
+        ExclusionViaRounding = False
+    elif sys.argv[5] == 'BadByBoth':
+        ExclusionViaStringMatching = True
+        ExclusionViaRounding = True
+    elif sys.argv[5] == 'BadByNone':
+        ExclusionViaStringMatching = False
+        ExclusionViaRounding = False
 else:
-	ExclusionViaStringMatching		= True
-	ExclusionViaRounding			= False
+    ExclusionViaStringMatching = True
+    ExclusionViaRounding = False
 TakeAllCorners = True  ## not fully implemented
 
 
-print '\nCleaning of coordinate data.'
-print '\nRunning with these data:'
-print '\tInfile localities:       ' + InFileName.split('/')[-1]
-print '\tInfile bad coordinates:  ' + PolitCoordFileName.split('/')[-1]
-print '\tOutfile good localities: ' + OutGoodFileName.split('/')[-1]
-print '\tOutfile bad localities:  ' + OutBadFileName.split('/')[-1]
-print '\nInclusion criteria (use -h to see all options):'
-print '\t- Adding information beyond the first decimal digit (i.e. more than 6 arcminutes precision)'
+print ('\nCleaning of coordinate data.')
+print ('\nRunning with these data:')
+print ('\tInfile localities:       ' + InFileName.split('/')[-1])
+print ('\tInfile bad coordinates:  ' + PolitCoordFileName.split('/')[-1])
+print ('\tOutfile good localities: ' + OutGoodFileName.split('/')[-1])
+print ('\tOutfile bad localities:  ' + OutBadFileName.split('/')[-1])
+print ('\nInclusion criteria (use -h to see all options):')
+print ('\t- Adding information beyond the first decimal digit (i.e. more than 6 arcminutes precision)')
 if ExclusionViaStringMatching == True:
-	print '\t- Not within a 0.01 degree grid cell that also contains a ADM1 political centroid or herbarium\n\t  (based on string matching)'
+    print ('\t- Not within a 0.01 degree grid cell that also contains a ADM1 political centroid or herbarium\n\t  (based on string matching)')
 if ExclusionViaRounding == True:
-	print '\t- Not within a 0.01 degree grid cell that also contains a ADM1 political centroid or herbarium\n\t  (based on number rounding)'
-
-
-
-
-
-
+    print ('\t- Not within a 0.01 degree grid cell that also contains a ADM1 political centroid or herbarium\n\t  (based on number rounding)')
 
 ############# prepare set of bad coordinates 
 # Make a list of "bad" coordinates that need to be excluded (herbaria + political areas ADM1 level), depending on whether all corners or just one corner is considered
 
 if ExclusionViaStringMatching == True or ExclusionViaRounding == True:
-	print '\nProcessing file with "bad" coordinates...'
-	BadCoordinates = []
-	PolitCoordFile	= open(PolitCoordFileName, 'rU')
-	if TakeAllCorners == False:  # we only take the SW most corner
-		LineNumber	= 0
-		BadLats		= []
-		BadLons		= []
-		for Line in PolitCoordFile:
-			LineNumber += 1
-			Line        = Line.strip('\n')
-			LineElements= Line.replace('\t', ',').split(',')
-			BadLats.append(str(LineElements[0]))
-			BadLons.append(str(LineElements[1]))
-			if LineNumber % 4 == 0:
-				BadLat = min([float(lat) for lat in BadLats])
-				BadLon = min([float(lon) for lon in BadLons])
-				BadLat 		= str(BadLat)
-				BadLon 		= str(BadLon)
-				if ExclusionViaStringMatching == True:
-					if '-' not in BadLat:  
-					# then we don't have a negative and need to fix the digit number
-					# the length needs to be three so we add a number of zeros of 3 minus
-					# how many digits we already have
-						Tmp = BadLat.split('.')[0]
-						DigitsMissing = 3 - len(Tmp)
-						BadLat = DigitsMissing * '0' + BadLat
-					if '-' not in BadLon:  
-						Tmp = BadLon.split('.')[0]
-						DigitsMissing = 3 - len(Tmp)
-						BadLon = DigitsMissing * '0' + BadLon
-				BadTuple = (str(BadLat), str(BadLon))
-				BadCoordinates.append(BadTuple)
-				BadLats		= []
-				BadLons		= []
-	if TakeAllCorners == True:
-		for Line in PolitCoordFile:
-			Line        = Line.strip('\n')
-			LineElements= Line.replace('\t', ',').split(',')
-			BadLat 		= str(LineElements[0])
-			BadLon 		= str(LineElements[1])
-			if ExclusionViaStringMatching == True:  # do we need to fix leading zeros?
-				if '-' not in BadLat: 
-					Tmp = BadLat.split('.')[0]
-					DigitsMissing = 3 - len(Tmp)
-					BadLat = DigitsMissing * '0' + BadLat
-				if '-' not in BadLon:
-					Tmp = BadLon.split('.')[0]
-					DigitsMissing = 3 - len(Tmp)
-					BadLon = DigitsMissing * '0' + BadLon
-			BadTuple = (BadLat, BadLon)
-			BadCoordinates.append(BadTuple)
-	BadCoordinates = set(BadCoordinates) 	# to have the object in useful format
-	PolitCoordFile.close()				
-	print '\tdone.'
+    print ('\nProcessing file with "bad" coordinates...')
+    BadCoordinates = []
+    PolitCoordFile = open(PolitCoordFileName, 'rU')
+    if TakeAllCorners == False:  # we only take the SW most corner
+        LineNumber = 0
+        BadLats = []
+        BadLons = []
+        for Line in PolitCoordFile:
+            LineNumber += 1
+            Line        = Line.strip('\n')
+            LineElements= Line.replace('\t', ',').split(',')
+            BadLats.append(str(LineElements[0]))
+            BadLons.append(str(LineElements[1]))
+            if LineNumber % 4 == 0:
+                BadLat = min([float(lat) for lat in BadLats])
+                BadLon = min([float(lon) for lon in BadLons])
+                BadLat = str(BadLat)
+                BadLon	= str(BadLon)
+                if ExclusionViaStringMatching == True:
+                    if '-' not in BadLat:  
+                    # then we don't have a negative and need to fix the digit number
+                    # the length needs to be three so we add a number of zeros of 3 minus
+                    # how many digits we already have
+                        Tmp = BadLat.split('.')[0]
+                        DigitsMissing = 3 - len(Tmp)
+                        BadLat = DigitsMissing * '0' + BadLat
+                    if '-' not in BadLon:  
+                        Tmp = BadLon.split('.')[0]
+                        DigitsMissing = 3 - len(Tmp)
+                        BadLon = DigitsMissing * '0' + BadLon
+                BadTuple = (str(BadLat), str(BadLon))
+                BadCoordinates.append(BadTuple)
+                BadLats = []
+                BadLons = []
+    if TakeAllCorners == True:
+        for Line in PolitCoordFile:
+            Line = Line.strip('\n')
+            LineElements= Line.replace('\t', ',').split(',')
+            BadLat = str(LineElements[0])
+            BadLon = str(LineElements[1])
+            if ExclusionViaStringMatching == True:  # do we need to fix leading zeros?
+                if '-' not in BadLat: 
+                    Tmp = BadLat.split('.')[0]
+                    DigitsMissing = 3 - len(Tmp)
+                    BadLat = DigitsMissing * '0' + BadLat
+                if '-' not in BadLon:
+                    Tmp = BadLon.split('.')[0]
+                    DigitsMissing = 3 - len(Tmp)
+                    BadLon = DigitsMissing * '0' + BadLon
+            BadTuple = (BadLat, BadLon)
+            BadCoordinates.append(BadTuple)
+    BadCoordinates = set(BadCoordinates) 	# to have the object in useful format
+    PolitCoordFile.close()				
+    print ('\tdone.')
 else:
-	print '\nNo "bad" coordinates specified.'
+    print ('\nNo "bad" coordinates specified.')
 
 
 ############# parse the infile
 # check whether good/bad coordinate and whether desired precision
-InFile 		= open(InFileName, 'rU')
+InFile = open(InFileName, 'rU')
 OutGoodFile = open(OutGoodFileName, 'w')
-OutBadFile	= open(OutBadFileName, 'w')
+OutBadFile = open(OutBadFileName, 'w')
 
 # progress counters
-Counter							= 0
-BigCounter						= 1
-BeyondStart						= False
-BadRecordsImprecisionCounter	= 0 
-BadRecordsRoundingCounter		= 0 
-BadRecordsStringCounter			= 0
+Counter = 0
+BigCounter = 1
+BeyondStart = False
+BadRecordsImprecisionCounter = 0 
+BadRecordsRoundingCounter = 0 
+BadRecordsStringCounter = 0
 
-print "\nStart processing infile..."
+print ("\nStart processing infile...")
 for Line in InFile:
-	Counter += 1
-	Line = Line.strip('\n').strip('\r')
-	LineElements= Line.replace('\t', ',').split(',')
-	Lat = LineElements[1]
-	Lon = LineElements[2]
+    Counter += 1
+    Line = Line.strip('\n').strip('\r')
+    LineElements= Line.replace('\t', ',').split(',')
+    Lat = LineElements[1]
+    Lon = LineElements[2]
 
-	##  decide whether good or bad coordinate... start assuming good
-	GoodRecord = True
+    ##  decide whether good or bad coordinate... start assuming good
+    GoodRecord = True
 
-	#   1a. What precision does it have?
-	LatPrecision = 0
-	LonPrecision = 0
-	MinImprecision = ['166666', '333333', '666666', '833333']
-	#   Decimal coordinate starts with:
+    #   1a. What precision does it have?
+    LatPrecision = 0
+    LonPrecision = 0
+    MinImprecision = ['166666', '333333', '666666', '833333']
+    #   Decimal coordinate starts with:
 	#	166666  = 10 min
 	#	333333  = 20 min
 	#	666666  = 40 min
 	#	833333  = 50 min
 
 	# precision for latitude:
-	LatLength  = Lat
-	LatLength  = LatLength.split('.')
-	if (len(LatLength) == 2):					 
+    LatLength  = Lat
+    LatLength  = LatLength.split('.')
+    if (len(LatLength) == 2):					 
 		# then it was splitted at the . and thus it has decimals
-		if LatLength[1][0:6] in MinImprecision:  
-			# then its exactly precise at imprecise minutes
-			LatPrecision = int(1)
-		else: 
-			LatPrecision = int(len(LatLength[1]))
-	else:
-		LatPrecision = int(0)
+        if LatLength[1][0:6] in MinImprecision:  
+		# then its exactly precise at imprecise minutes
+            LatPrecision = int(1)
+        else: 
+            LatPrecision = int(len(LatLength[1]))
+    else:
+        LatPrecision = int(0)
 
-	# precision for longitude:
-	LonLength  = Lon
-	LonLength  = LonLength.split('.')
-	if (len(LonLength) == 2):					  
-		# then it was splitted at the . and thus it has decimals
-		if LonLength[1][0:6] in MinImprecision:  
-			# then its exactly precise at imprecise minutes
-			LonPrecision = int(1)
-		else: 
-			LonPrecision = int(len(LonLength[1]))
-	else:
-		LonPrecision = int(0)
-
-	#   1b. Is the coordinate precise enough?
-	CoordPrecision = max(LatPrecision, LonPrecision)
-	if CoordPrecision < 2:
-		GoodRecord = False
-		BadRecordsImprecisionCounter += 1
-
-
-	####   2. Does the coordinate fall within the "bad squares"
-		
-	## via rounding:	
-	#      no list comprehension, is really slow.: 12 min for 14000 records
-	
-	if ExclusionViaRounding == True:
-		IsBad = any( (round(float(Bad[0]), 2) == round(float(Lat), 2) and round(float(Bad[1]), 2) == round(float(Lon), 2) ) for Bad in BadCoordinates)
-		if IsBad == True:
-			print '  ! Excluded : ' + str(Line)
-			GoodRecord == False
-			BadRecordsRoundingCounter += 1
-
-	
-	## via string matching:
-	#		list comprehension; takes a minute for 14000 records.
-
-	if ExclusionViaStringMatching == True:
-		if '-' not in Lat:  
-		# then we don't have a negative and need to fix the digit number
-		# the length needs to be three so we add a number of zeros of 3 minus how many 
-		# digits we already have
-			Tmp = Lat.split('.')[0]
-			DigitsMissing = 3 - len(Tmp)
-			Lat = DigitsMissing * '0' + Lat
-		if '-' not in Lon:
-			Tmp = Lon.split('.')[0]
-			DigitsMissing = 3 - len(Tmp)
-			Lon = DigitsMissing * '0' + Lon
-		LatLonTuple = (Lat, Lon)
-		x = [LatLonTuple for BadCoord in BadCoordinates if (BadCoord[0] in LatLonTuple[0] and BadCoord[1] in LatLonTuple[1])]
-		# x is the LatLonTuple IF IT IS BAD
-		if LatLonTuple in x:
-			# uncomment this to check each record that is excluded
-			# y = [BadCoord for BadCoord in BadCoordinates if (BadCoord[0] in LatLonTuple[0] and BadCoord[1] in LatLonTuple[1]) ]
-			# print 'Query : ' + str(Line)
-			# print 'match found : ' + str(y)
-			# print 'decicion: exclude \n'
-			print '  ! Excluded : ' + str(Line)
-			GoodRecord == False
-			BadRecordsStringCounter += 1
+    # precision for longitude:
+    LonLength  = Lon
+    LonLength  = LonLength.split('.')
+    if (len(LonLength) == 2):					  
+        # then it was splitted at the . and thus it has decimals
+        if LonLength[1][0:6] in MinImprecision:  
+        # then its exactly precise at imprecise minutes
+            LonPrecision = int(1)
+        else: 
+            LonPrecision = int(len(LonLength[1]))
+    else:
+        LonPrecision = int(0)
+        #   1b. Is the coordinate precise enough?
+    CoordPrecision = max(LatPrecision, LonPrecision)
+    if CoordPrecision < 2:
+        GoodRecord = False
+        BadRecordsImprecisionCounter += 1
 
 
-	##  Print line to file with good or with bad coordinates 		
-	if GoodRecord == False:
-		OutBadFile.write(Line + '\n')
-	if GoodRecord == True:
-		OutGoodFile.write(Line + '\n')
+        ####   2. Does the coordinate fall within the "bad squares"
+        ## via rounding:	
+        #      no list comprehension, is really slow.: 12 min for 14000 records
+    if ExclusionViaRounding == True:
+        IsBad = any( (round(float(Bad[0]), 2) == round(float(Lat), 2) and round(float(Bad[1]), 2) == round(float(Lon), 2) ) for Bad in BadCoordinates)
+        if IsBad == True:
+            print ('  ! Excluded : ' + str(Line))
+            GoodRecord == False
+            BadRecordsRoundingCounter += 1
+        ## via string matching:
+        #		list comprehension; takes a minute for 14000 records.
+    if ExclusionViaStringMatching == True:
+        if '-' not in Lat:  
+    # then we don't have a negative and need to fix the digit number
+    # the length needs to be three so we add a number of zeros of 3 minus how many 
+    # digits we already have
+            Tmp = Lat.split('.')[0]
+            DigitsMissing = 3 - len(Tmp)
+            Lat = DigitsMissing * '0' + Lat
+        if '-' not in Lon:
+            Tmp = Lon.split('.')[0]
+            DigitsMissing = 3 - len(Tmp)
+            Lon = DigitsMissing * '0' + Lon
+        LatLonTuple = (Lat, Lon)
+        x = [LatLonTuple for BadCoord in BadCoordinates if (BadCoord[0] in LatLonTuple[0] and BadCoord[1] in LatLonTuple[1])]
+        # x is the LatLonTuple IF IT IS BAD
+        if LatLonTuple in x:
+            # uncomment this to check each record that is excluded
+            # y = [BadCoord for BadCoord in BadCoordinates if (BadCoord[0] in LatLonTuple[0] and BadCoord[1] in LatLonTuple[1]) ]
+            # print 'Query : ' + str(Line)
+            # print 'match found : ' + str(y)
+            # print 'decicion: exclude \n'
+            print ('  ! Excluded : ' + str(Line))
+            GoodRecord == False
+            BadRecordsStringCounter += 1
 
 
-	##  Track progress line to file with good or with bad coordinates 		
-	if Counter == 500:
-		print '\t' + str(Counter * BigCounter) + ' records parsed...'
-		if BeyondStart == False:
-			RunTime = time.time()-TimeStart
-			print str(round(RunTime)*10) + " seconds projected runtime per thousand records"
-			BeyondStart = True
-		BigCounter += 1
-		Counter = 0
+         ##  Print line to file with good or with bad coordinates 		
+    if GoodRecord == False:
+       OutBadFile.write(Line + '\n')
+    if GoodRecord == True:
+        OutGoodFile.write(Line + '\n')
 
-	if Counter == 200 and BeyondStart == False:
-		RunTime = time.time()-TimeStart
-		print "\t200 records parsed; projected runtime per 10,000 records:  " + str(round(RunTime * 50 / 60, 2)) + " minutes."
-		BeyondStart = True
+
+    ##  Track progress line to file with good or with bad coordinates 		
+    if Counter == 500:
+        print ('\t' + str(Counter * BigCounter) + ' records parsed...')
+        if BeyondStart == False:
+            RunTime = time.time()-TimeStart
+            print(str(round(RunTime)*10) + " seconds projected runtime per thousand records")
+            BeyondStart = True
+        BigCounter += 1
+        Counter = 0
+
+    if Counter == 200 and BeyondStart == False:
+        RunTime = time.time()-TimeStart
+        print ("\t200 records parsed; projected runtime per 10,000 records:  " + str(round(RunTime * 50 / 60, 2)) + " minutes.")
+        BeyondStart = True
 
 
 ## print output
-print '\tdone.'
+print ('\tdone.')
 
-print '\nOf ' + str(BigCounter*500+Counter) + ' records parsed, ' + str(BadRecordsImprecisionCounter+BadRecordsRoundingCounter+BadRecordsStringCounter) + ' were excluded.'
-print str(BadRecordsImprecisionCounter) + ' excluded due to imprecision of the locality'
+print ('\nOf ' + str(BigCounter*500+Counter) + ' records parsed, ' + str(BadRecordsImprecisionCounter+BadRecordsRoundingCounter+BadRecordsStringCounter) + ' were excluded.')
+print (str(BadRecordsImprecisionCounter) + ' excluded due to imprecision of the locality')
 if ExclusionViaRounding == True or ExclusionViaStringMatching == True:
-	print str(BadRecordsRoundingCounter+BadRecordsStringCounter) + ' excluded due to suspicious locality (herbarium / political centroid)'
-	if ExclusionViaRounding == True:
-		print '\tof the ' + str(BadRecordsRoundingCounter+BadRecordsStringCounter) + ', ' + str(BadRecordsRoundingCounter) + ' were found through rounding'
-	if ExclusionViaStringMatching == True:
-		print '\tof the ' + str(BadRecordsRoundingCounter+BadRecordsStringCounter) + ', ' + str(BadRecordsStringCounter) + ' were found through truncating'
-print '\n\n'
+    print (str(BadRecordsRoundingCounter+BadRecordsStringCounter) + ' excluded due to suspicious locality (herbarium / political centroid)')
+    if ExclusionViaRounding == True:
+        print ('\tof the ' + str(BadRecordsRoundingCounter+BadRecordsStringCounter) + ', ' + str(BadRecordsRoundingCounter) + ' were found through rounding')
+    if ExclusionViaStringMatching == True:
+        print ('\tof the ' + str(BadRecordsRoundingCounter+BadRecordsStringCounter) + ', ' + str(BadRecordsStringCounter) + ' were found through truncating')
+print('\n\n')
 
 
 
